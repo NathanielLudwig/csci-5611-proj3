@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+    </head>
+    <body>
+        <h1>CSCI 5611 Project 3 - Nathaniel Ludwig - ludwi298</h1>
+        <h2>A brief description of features with videos</h2>
+        <h3>video 1 - CCD solver</h3>
+        <video width="400" controls autoplay>
+            <source src="https://github.com/NathanielLudwig/csci5611-proj2/blob/master/videos/demo1.mov?raw=true" type="video/mp4">
+        </video>
+        <ul>
+            <li>Multiple arms - timestamp: whole video</li>
+            <li>Joint Limits - timestamp: whole video</li>
+            <li>User interaction - timestamp: whole video</li>
+        </ul>
+        <h3>video 2 - FABRIK solver</h3>
+        <video width="400" controls autoplay>
+            <source src="https://github.com/NathanielLudwig/csci5611-proj2/blob/master/videos/demo2.mov?raw=true" type="video/mp4">
+        </video>
+        <ul>
+            <li>Challenge: Implement FABRIK solver: whole video</li>
+        </ul>
+        <h2>An explicit list of features </h2>
+        <ul>
+            <li>Mutiple arms: I expanded the starter CCD code from the lectures to include multiple arms.
+                The mouse input can be used to move either 2 separate targets or a single target for the arms to reach.
+            </li>
+            <li>Joint Limits: The arm on the left side has a joint limit of 45 degrees. The 
+                arm on the right side has no joint limits for comparison.
+            </li>
+            <li>User Interaction: The mouse input is used to control the position of the goals
+                each goal can be moved separately using a click and drag motion. The goals can also be 
+                combined to form a single goal for both arms.
+            </li>
+            <li>Challenge: FABRIK solver - I decided to compare a CCD solver with a FABRIK solver in 2D.
+                The FABRIK solver is shown in the second video. The first thing I noticed with the FABRIK solver
+                is that the animation looked more natural and used more of the joints. The CCD solver prioritized joints closest
+                to the goal which sometimes made the joints close to the root straight. In more cases the FABRIK solver showed an
+                arc while the CCD solver looked unnatural. I found the FABRIK solver to be more difficult to implement,
+                the code needed to be adapted from the paper and involved more vector math. The FABRIK solver in the second video
+                has a 90 degree limit on the joints. I found the the joint limit effect looked similar between the CCD and FABRIK
+                though the FABRIK solver remained to look more natural. The joint limits on the CCD solver were trivial to implement
+                since it already works with angles they just needed to be clamped as noted in the lecture. The joint limits were more difficult
+                to implement in FABRIK due to it being based around positions not angles. The FABRIK solution is more math heavy and involves a cone 
+                representation.
+            </li>
+        </ul>
+        <h2>Source Code</h2>
+        <a href="https://raw.githubusercontent.com/NathanielLudwig/csci-5611-proj3/main/FABRIK/FABRIKsolver.pde">Fabrik solver</a>
+        <a href="https://raw.githubusercontent.com/NathanielLudwig/csci-5611-proj3/main/IK_1Frozen/IK_1Frozen.pde">CCD solver</a>
+        <a href="https://github.com/NathanielLudwig/csci-5611-proj3/archive/refs/heads/main.zip">ALL FILES - zip</a><br><br>
+        <h2>List of tools/libraries</h2>
+        <p>I used processing for the visualization. The CCD code was adapted from the lecture example. The FABRIK solver
+            was based of algorithm 1 in the paper and the YouTube video linked on the canvas page.
+        </p>
+        <h2>difficulties encountered</h2>
+        <p>The Fabrik solver was a bit difficult to understand and adapting the pseudocode from the paper was tricky. Joint limits were also difficult to implement with FABRIK</p>
+    </body>
+</html>
