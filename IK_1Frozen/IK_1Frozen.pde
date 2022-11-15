@@ -90,7 +90,7 @@ void solve(){
     a4 += acos(dotProd);
   else
     a4 -= acos(dotProd);
-  a4 = constrain(a4, -HALF_PI, HALF_PI);
+  a4 = constrain(a4, -QUARTER_PI, QUARTER_PI);
   fk(); //Update link positions with fk (e.g. end effector changed)
   
   startToGoal = goal1.minus(start_l3);
@@ -101,7 +101,7 @@ void solve(){
     a3 += acos(dotProd);
   else
     a3 -= acos(dotProd);
-  a3 = constrain(a3, -HALF_PI, HALF_PI);
+  a3 = constrain(a3, -QUARTER_PI, QUARTER_PI);
   fk(); //Update link positions with fk (e.g. end effector changed)
   
   startToGoal = goal1.minus(start_l2);
@@ -112,7 +112,7 @@ void solve(){
     a2 += acos(dotProd);
   else
     a2 -= acos(dotProd);
-  a2 = constrain(a2, -HALF_PI, HALF_PI);
+  a2 = constrain(a2, -QUARTER_PI, QUARTER_PI);
   fk(); //Update link positions with fk (e.g. end effector changed)
   
   startToGoal = goal1.minus(start_l1);
@@ -123,7 +123,7 @@ void solve(){
     a1 += acos(dotProd);
   else
     a1 -= acos(dotProd);
-  a1 = constrain(a1, -HALF_PI, HALF_PI);
+  a1 = constrain(a1, -QUARTER_PI, QUARTER_PI);
   fk(); //Update link positions with fk (e.g. end effector changed)
   
   //[CODE FOR LAST LINK GOES HERE]

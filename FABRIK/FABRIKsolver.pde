@@ -58,167 +58,100 @@ float a4_arm2 = 0.7;
 
 Vec2 start_l1, start_l2, start_l3, start_l4, endPoint;
 
-void fk(){
-  start_l1 = new Vec2(cos(a0)*l0,sin(a0)*l0).plus(root);
-  start_l2 = new Vec2(cos(a0+a1)*l1,sin(a0+a1)*l1).plus(start_l1);
-  start_l3 = new Vec2(cos(a0+a1+a2)*l2,sin(a0+a1+a2)*l2).plus(start_l2);
-  start_l4 = new Vec2(cos(a0+a1+a2+a3)*l3,sin(a0+a1+a2+a3)*l3).plus(start_l3);
-  endPoint = new Vec2(cos(a0+a1+a2+a3+a4)*l4,sin(a0+a1+a2+a3+a4)*l4).plus(start_l4);
+int numJoints = 5;
+Vec2 goal = new Vec2(100, 100);
+Vec2[] joints = {new Vec2(400, 350), new Vec2(300, 350), new Vec2(200, 350), new Vec2(100, 350), new Vec2(0, 350)};
+int[] dists = {100, 100, 100, 100};
+float tolerance = 0.1;
+
+Vec2 constrain(Vec2 calc, Vec2 line) {
+  float scalar = dot(calc, line) / line.length(); //<>//
+  Vec2 proj = (line.normalized()).times(scalar);
+  
+  float left = -(proj.length() * tan(HALF_PI));
+  float right = (proj.length() * tan(HALF_PI));
+  float up = (proj.length() * tan(HALF_PI));
+  float down = -(proj.length() * tan(HALF_PI));
+  
+  float xbound = calc.x >=0 ? right : left;
+  float ybound = calc.y >=0 ? up : down;
+  float ellipse = sq(calc.x)/sq(xbound) + sq(calc.y)/sq(ybound);
+  boolean inbounds = ellipse <= 1 && scalar >= 0;
+  Vec2 res = calc;
+  if (!inbounds) {
+    float a = atan2(calc.y, calc.y);
+    res.x = xbound * cos(a);
+    res.y = ybound * sin(a);
+  }
+  return res;
 }
 
-Vec2 start_l1_arm2, start_l2_arm2, start_l3_arm2, start_l4_arm2, endPoint_arm2;
-void fk_arm2(){
-  start_l1_arm2 = new Vec2(cos(a0_arm2)*l0_arm2,sin(a0_arm2)*l0_arm2).plus(root);
-  start_l2_arm2 = new Vec2(cos(a0_arm2+a1_arm2)*l1_arm2,sin(a0_arm2+a1_arm2)*l1_arm2).plus(start_l1_arm2);
-  start_l3_arm2 = new Vec2(cos(a0_arm2+a1_arm2+a2_arm2)*l2_arm2,sin(a0_arm2+a1_arm2+a2_arm2)*l2_arm2).plus(start_l2_arm2);
-  start_l4_arm2 = new Vec2(cos(a0_arm2+a1_arm2+a2_arm2+a3_arm2)*l3_arm2,sin(a0_arm2+a1_arm2+a2_arm2+a3_arm2)*l3_arm2).plus(start_l3_arm2);
-  endPoint_arm2 = new Vec2(cos(a0_arm2+a1_arm2+a2_arm2+a3_arm2+a4_arm2)*l4_arm2,sin(a0_arm2+a1_arm2+a2_arm2+a3_arm2+a4_arm2)*l4_arm2).plus(start_l4_arm2);
+void backward() {
+  joints[numJoints - 1] = goal;
+  for (int i = numJoints - 2; i >= 0; i--) { //<>//
+    Vec2 r = (joints[i+1].minus(joints[i]));
+    float l = dists[i] / r.length();
+    joints[i] = joints[i+1].times(1 - l).plus(joints[i].times(l));
+  }
 }
 
-Vec2 goal1 = new Vec2(100, 100);
-Vec2 goal2 = new Vec2(600, 600);
+void forward() {
+  joints[0] = root;
+  Vec2 coneVec = (joints[1].minus(joints[0])).normalized();
+  for (int i = 0; i < numJoints - 1; i++) {
+    Vec2 r = joints[i+1].minus(joints[i]);
+    float l = dists[i] / r.length(); //<>//
+    Vec2 pos = joints[i].times(1 - l).plus(joints[i+1].times(l));
+    Vec2 t  = constrain(pos.minus(joints[i]), coneVec);
+    joints[i+1] = joints[i].plus(t);
+    //joints[i+1] = joints[i].times(1 - l).plus(joints[i+1].times(l));
+    coneVec = joints[i+1].minus(joints[i]);
+  }
+}
+
 void solve(){
-  Vec2 startToGoal, startToEndEffector;
-  Vec2 startToGoal_arm2, startToEndEffector_arm2;
-  float dotProd; //<>//
-    
-  startToGoal = goal1.minus(start_l4);
-  startToEndEffector = endPoint.minus(start_l4);
-  dotProd = dot(startToGoal.normalized(),startToEndEffector.normalized());
-  dotProd = clamp(dotProd,-1,1);
-  if (cross(startToGoal,startToEndEffector) < 0)
-    a4 += acos(dotProd);
-  else
-    a4 -= acos(dotProd);
-  a4 = constrain(a4, -HALF_PI, HALF_PI);
-  fk(); //Update link positions with fk (e.g. end effector changed)
-  
-  startToGoal = goal1.minus(start_l3);
-  startToEndEffector = endPoint.minus(start_l3);
-  dotProd = dot(startToGoal.normalized(),startToEndEffector.normalized());
-  dotProd = clamp(dotProd,-1,1);
-  if (cross(startToGoal,startToEndEffector) < 0)
-    a3 += acos(dotProd);
-  else
-    a3 -= acos(dotProd);
-  a3 = constrain(a3, -HALF_PI, HALF_PI);
-  fk(); //Update link positions with fk (e.g. end effector changed)
-  
-  startToGoal = goal1.minus(start_l2);
-  startToEndEffector = endPoint.minus(start_l2);
-  dotProd = dot(startToGoal.normalized(),startToEndEffector.normalized());
-  dotProd = clamp(dotProd,-1,1);
-  if (cross(startToGoal,startToEndEffector) < 0)
-    a2 += acos(dotProd);
-  else
-    a2 -= acos(dotProd);
-  a2 = constrain(a2, -HALF_PI, HALF_PI);
-  fk(); //Update link positions with fk (e.g. end effector changed)
-  
-  startToGoal = goal1.minus(start_l1);
-  startToEndEffector = endPoint.minus(start_l1);
-  dotProd = dot(startToGoal.normalized(),startToEndEffector.normalized());
-  dotProd = clamp(dotProd,-1,1);
-  if (cross(startToGoal,startToEndEffector) < 0)
-    a1 += acos(dotProd);
-  else
-    a1 -= acos(dotProd);
-  a1 = constrain(a1, -HALF_PI, HALF_PI);
-  fk(); //Update link positions with fk (e.g. end effector changed)
-  
-  //[CODE FOR LAST LINK GOES HERE]
-  startToGoal = goal1.minus(root);
-  startToEndEffector = endPoint.minus(root);
-  dotProd = dot(startToGoal.normalized(),startToEndEffector.normalized());
-  dotProd = clamp(dotProd,-1,1);
-  if (cross(startToGoal,startToEndEffector) < 0)
-    a0 += acos(dotProd);
-  else
-    a0 -= acos(dotProd);
-  //a0 = constrain(a0, -HALF_PI, HALF_PI);
-  fk(); //Update link positions with fk (e.g. end effector changed)
-  
-  // Arm 2
-  startToGoal_arm2 = goal2.minus(start_l4_arm2);
-  startToEndEffector_arm2 = endPoint_arm2.minus(start_l4_arm2);
-  dotProd = dot(startToGoal_arm2.normalized(),startToEndEffector_arm2.normalized());
-  dotProd = clamp(dotProd,-1,1);
-  if (cross(startToGoal_arm2,startToEndEffector_arm2) < 0)
-    a4_arm2 += acos(dotProd);
-  else
-    a4_arm2 -= acos(dotProd);
-  fk_arm2(); //Update link positions with fk (e.g. end effector changed)
-  
-  startToGoal_arm2 = goal2.minus(start_l3_arm2);
-  startToEndEffector_arm2 = endPoint_arm2.minus(start_l3_arm2); //<>//
-  dotProd = dot(startToGoal_arm2.normalized(),startToEndEffector_arm2.normalized());
-  dotProd = clamp(dotProd,-1,1);
-  if (cross(startToGoal_arm2,startToEndEffector_arm2) < 0) //<>//
-    a3_arm2 += acos(dotProd);
-  else
-    a3_arm2 -= acos(dotProd);
-  fk_arm2(); //Update link positions with fk (e.g. end effector changed)
-  
-  startToGoal_arm2 = goal2.minus(start_l2_arm2);
-  startToEndEffector_arm2 = endPoint_arm2.minus(start_l2_arm2);
-  dotProd = dot(startToGoal_arm2.normalized(),startToEndEffector_arm2.normalized());
-  dotProd = clamp(dotProd,-1,1);
-  if (cross(startToGoal_arm2,startToEndEffector_arm2) < 0)
-    a2_arm2 += acos(dotProd);
-  else
-    a2_arm2 -= acos(dotProd);
-  fk_arm2(); //Update link positions with fk (e.g. end effector changed)
-  
-  startToGoal_arm2 = goal2.minus(start_l1_arm2);
-  startToEndEffector_arm2 = endPoint_arm2.minus(start_l1_arm2);
-  dotProd = dot(startToGoal_arm2.normalized(),startToEndEffector_arm2.normalized());
-  dotProd = clamp(dotProd,-1,1);
-  if (cross(startToGoal_arm2,startToEndEffector_arm2) < 0)
-    a1_arm2 += acos(dotProd);
-  else
-    a1_arm2 -= acos(dotProd);
-  fk_arm2(); //Update link positions with fk (e.g. end effector changed)
-  
-  //[CODE FOR LAST LINK GOES HERE]
-  startToGoal_arm2 = goal2.minus(root);
-  startToEndEffector_arm2 = endPoint_arm2.minus(root);
-  dotProd = dot(startToGoal_arm2.normalized(),startToEndEffector_arm2.normalized());
-  dotProd = clamp(dotProd,-1,1);
-  if (cross(startToGoal_arm2,startToEndEffector_arm2) < 0)
-    a0_arm2 += acos(dotProd);
-  else
-    a0_arm2 -= acos(dotProd);
-  fk_arm2(); //Update link positions with fk (e.g. end effector changed)
-  
-  println("Angle 0:",nf(a0,1,2),"Angle 1:",nf(a1,1,2),"Angle 2:",nf(a2,1,2),"Angle 3:",nf(a3,1,2),"Angle 4:",nf(a4,1,2));
+  Vec2 startToGoal; //<>//
+  startToGoal = goal.minus(root);
+  float totaldist = 0;
+  for (int i : dists)
+    totaldist += i;
+  float dist = startToGoal.length();
+  if (dist > totaldist) {
+    for (int i = 0; i < numJoints - 1; i++) {
+      float r = (goal.minus(joints[i])).length();
+      float l = dists[i] / r;
+      joints[i+1] =  (joints[i].times(1 - l)).plus(goal.times(l));
+    }
+  } else {
+    int bcount = 0;
+    float diff = (joints[numJoints - 1].minus(goal)).length();
+    while (diff > tolerance) {
+      backward();
+      forward();
+      diff = (joints[numJoints - 1].minus(goal)).length();
+      bcount = bcount++;
+      if (bcount > 10) break;
+    }
+  } //<>// //<>//
 }
 
 float armW = 20;
 boolean tracking1 = false;
 boolean tracking2 = false;
 void draw(){
-  fk();
-  fk_arm2();
   solve();
   
   if (mousePressed == true) {
-    if (abs(mouseX - goal1.x) < 20 && abs(mouseY - goal1.y) < 20) {
+    if (abs(mouseX - goal.x) < 20 && abs(mouseY - goal.y) < 20) {
       tracking1 = true;
-    }
-    if (abs(mouseX - goal2.x) < 20 && abs(mouseY - goal2.y) < 20) {
-      tracking2 = true;
     }
   } else {
     tracking1 = false;
     tracking2 = false;
   }
   if (tracking1 == true) {
-    goal1.x = mouseX;
-    goal1.y = mouseY;
-  }
-  if (tracking2 == true) {
-    goal2.x = mouseX;
-    goal2.y = mouseY;
+    goal.x = mouseX;
+    goal.y = mouseY;
   }
   
   background(255,255,255);
@@ -229,79 +162,40 @@ void draw(){
   rect(-20,-20,40,40);
   popMatrix();
   
-  
   fill(10,150,40); //Green IK Chain
   pushMatrix();
-  translate(root.x,root.y);
-  rotate(a0);
-  quad(0, -armW/2, l0, -.1*armW, l0, .1*armW, 0, armW/2);
+  translate(joints[0].x,joints[0].y);
+  circle(0,0,20);
+  popMatrix();
+  line(joints[0].x, joints[0].y, joints[1].x, joints[1].y);
+  line(joints[1].x, joints[1].y, joints[2].x, joints[2].y);
+  line(joints[2].x, joints[2].y, joints[3].x, joints[3].y);
+  line(joints[3].x, joints[3].y, joints[4].x, joints[4].y);
+
+  
+  pushMatrix();
+  translate(joints[1].x,joints[1].y);
+  circle(0,0,20);
   popMatrix();
   
   pushMatrix();
-  translate(start_l1.x,start_l1.y);
-  rotate(a0+a1);
-  quad(0, -armW/2, l1, -.1*armW, l1, .1*armW, 0, armW/2);
+  translate(joints[2].x,joints[2].y);
+  circle(0,0,20);
   popMatrix();
   
   pushMatrix();
-  translate(start_l2.x,start_l2.y);
-  rotate(a0+a1+a2);
-  quad(0, -armW/2, l2, -.1*armW, l2, .1*armW, 0, armW/2);
+  translate(joints[3].x,joints[3].y);
+  circle(0,0,20);
   popMatrix();
   
   pushMatrix();
-  translate(start_l3.x,start_l3.y);
-  rotate(a0+a1+a2+a3);
-  quad(0, -armW/2, l3, -.1*armW, l3, .1*armW, 0, armW/2);
-  popMatrix();
-  
-  pushMatrix();
-  translate(start_l4.x,start_l4.y);
-  rotate(a0+a1+a2+a3+a4);
-  quad(0, -armW/2, l4, -.1*armW, l4, .1*armW, 0, armW/2);
-  popMatrix();
-  
-  // Arm 2
-  fill(10,150,40); //Green IK Chain
-  pushMatrix();
-  translate(root.x,root.y);
-  rotate(a0_arm2);
-  quad(0, -armW/2, l0, -.1*armW, l0, .1*armW, 0, armW/2);
-  popMatrix();
-  
-  pushMatrix();
-  translate(start_l1_arm2.x,start_l1_arm2.y);
-  rotate(a0_arm2+a1_arm2);
-  quad(0, -armW/2, l1, -.1*armW, l1, .1*armW, 0, armW/2);
-  popMatrix();
-  
-  pushMatrix();
-  translate(start_l2_arm2.x,start_l2_arm2.y);
-  rotate(a0_arm2+a1_arm2+a2_arm2);
-  quad(0, -armW/2, l2, -.1*armW, l2, .1*armW, 0, armW/2);
-  popMatrix();
-  
-  pushMatrix();
-  translate(start_l3_arm2.x,start_l3_arm2.y);
-  rotate(a0_arm2+a1_arm2+a2_arm2+a3_arm2);
-  quad(0, -armW/2, l3, -.1*armW, l3, .1*armW, 0, armW/2);
-  popMatrix();
-  
-  pushMatrix();
-  translate(start_l4_arm2.x,start_l4_arm2.y);
-  rotate(a0_arm2+a1_arm2+a2_arm2+a3_arm2+a4_arm2);
-  quad(0, -armW/2, l4, -.1*armW, l4, .1*armW, 0, armW/2);
-  popMatrix();
-  
-  fill(0,0,0); //Goal/mouse
-  pushMatrix();
-  translate(goal1.x,goal1.y);
+  translate(joints[4].x,joints[4].y);
   circle(0,0,20);
   popMatrix();
   
   fill(0,0,0); //Goal/mouse
   pushMatrix();
-  translate(goal2.x,goal2.y);
+  translate(goal.x,goal.y);
   circle(0,0,20);
   popMatrix();
   
